@@ -1,0 +1,55 @@
+{
+  "updated": "2026-07-30T23:33:26.013413+00:00",
+  "packages": [
+    {
+      "package": "numpy",
+      "downloads_month": null,
+      "error": "HTTP Error 429: Too Many Requests"
+    },
+    {
+      "package": "pandas",
+      "downloads_month": null,
+      "error": "HTTP Error 429: Too Many Requests"
+    },
+    {
+      "package": "fastapi",
+      "downloads_month": null,
+      "error": "HTTP Error 429: Too Many Requests"
+    },
+    {
+      "package": "pydantic",
+      "downloads_month": null,
+      "error": "HTTP Error 429: Too Many Requests"
+    },
+    {
+      "package": "langchain",
+      "downloads_month": null,
+      "error": "HTTP Error 429: Too Many Requests"
+    },
+    {
+      "package": "torch",
+      "downloads_month": null,
+      "error": "HTTP Error 429: Too Many Requests"
+    },
+    {
+      "package": "polars",
+      "downloads_month": 67536156,
+      "fetched_at": "2026-07-30T23:33:24.872444+00:00"
+    },
+    {
+      "package": "ruff",
+      "downloads_month": null,
+      "error": "HTTP Error 429: Too Many Requests"
+    },
+    {
+      "package": "uv",
+      "downloads_month": null,
+      "error": "HTTP Error 429: Too Many Requests"
+    },
+    {
+      "package": "httpx",
+      "downloads_month": null,
+      "error": "HTTP Error 429: Too Many Requests"
+    }
+  ]
+}

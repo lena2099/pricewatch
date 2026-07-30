@@ -1,0 +1,55 @@
+{
+  "updated": "2026-07-30T23:33:22.953533+00:00",
+  "packages": [
+    {
+      "package": "react",
+      "downloads_week": 162687688,
+      "fetched_at": "2026-07-30T23:33:21.055950+00:00"
+    },
+    {
+      "package": "next",
+      "downloads_week": 54833206,
+      "fetched_at": "2026-07-30T23:33:21.178139+00:00"
+    },
+    {
+      "package": "vue",
+      "downloads_week": 14134042,
+      "fetched_at": "2026-07-30T23:33:21.371292+00:00"
+    },
+    {
+      "package": "tailwindcss",
+      "downloads_week": 117155768,
+      "fetched_at": "2026-07-30T23:33:21.568504+00:00"
+    },
+    {
+      "package": "typescript",
+      "downloads_week": 250686863,
+      "fetched_at": "2026-07-30T23:33:21.858899+00:00"
+    },
+    {
+      "package": "vite",
+      "downloads_week": 142689878,
+      "fetched_at": "2026-07-30T23:33:21.974566+00:00"
+    },
+    {
+      "package": "esbuild",
+      "downloads_week": 263254441,
+      "fetched_at": "2026-07-30T23:33:22.167804+00:00"
+    },
+    {
+      "package": "astro",
+      "downloads_week": 4074224,
+      "fetched_at": "2026-07-30T23:33:22.417201+00:00"
+    },
+    {
+      "package": "svelte",
+      "downloads_week": 5300212,
+      "fetched_at": "2026-07-30T23:33:22.762858+00:00"
+    },
+    {
+      "package": "zod",
+      "downloads_week": 245395755,
+      "fetched_at": "2026-07-30T23:33:22.953315+00:00"
+    }
+  ]
+}
