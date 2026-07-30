@@ -59,6 +59,7 @@ def fetch_github_trending() -> list[dict]:
                 "stars_total": total_stars,
                 "stars_today": stars_today,
                 "url": f"https://github.com/{full_name}",
+                "history_url": f"https://raw.githubusercontent.com/lena2099/pricewatch/main/data/gh_{owner}_{repo_name}.json",
             })
         return repos
     except Exception as e:
@@ -99,9 +100,15 @@ def fetch_pypi_downloads(pkg: str) -> dict:
     try:
         req = Request(url, headers={"User-Agent": "DevPulse/1.0"})
         data = json.loads(urlopen(req, timeout=10).read())
+        downloads = 0
+        if "data" in data and "last_month" in data["data"]:
+            downloads = data["data"]["last_month"]
+        elif "data" in data:
+            # Some versions return the data directly
+            downloads = data["data"] if isinstance(data["data"], int) else 0
         return {
             "package": pkg,
-            "downloads_month": data.get("data", {}).get("last_month", 0) if "data" in data else 0,
+            "downloads_month": downloads,
             "fetched_at": datetime.now(timezone.utc).isoformat(),
         }
     except Exception as e:
