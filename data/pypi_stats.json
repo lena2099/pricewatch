@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-30T23:37:08.018295+00:00",
+  "updated": "2026-07-30T23:38:58.168965+00:00",
   "packages": [
     {
       "package": "numpy",
@@ -28,8 +28,8 @@
     },
     {
       "package": "torch",
-      "downloads_month": null,
-      "error": "HTTP Error 429: Too Many Requests"
+      "downloads_month": 95209197,
+      "fetched_at": "2026-07-30T23:38:56.687727+00:00"
     },
     {
       "package": "polars",
