@@ -47,19 +47,21 @@ def fetch_github_trending() -> list[dict]:
             lang_match = re.search(r'itemprop="programmingLanguage"[^>]*>\s*([^<\s]+)', block)
             language = lang_match.group(1).strip() if lang_match else "Unknown"
 
-            # Stars today — only after "stars today" text
-            stars_match = re.search(r'(\d[\d,]*)\s+stars?\s+today', block)
-            stars_today = int(stars_match.group(1).replace(",", "")) if stars_match else 0
-
-            # Total stars — use separate match for total (appears before "stars today")
-            # The first large number that ISN'T part of "stars today"
-            total_matches = re.findall(r'(\d[\d,]+)\s+stars?', block)
-            if len(total_matches) >= 2:
-                total_stars = int(total_matches[-2].replace(",", ""))  # second-to-last is total
-            elif total_matches:
-                total_stars = int(total_matches[0].replace(",", "")) if stars_today == 0 else 0
-            else:
-                total_stars = 0
+            # Stars — separate "stars today" from total
+            stars_today = 0
+            total_stars = 0
+            # Find all "N stars" patterns
+            all_stars = re.findall(r'(\d[\d,]*)\s+stars?\b', block)
+            if len(all_stars) >= 2:
+                # Last one is "stars today", second-to-last is total
+                stars_today = int(all_stars[-1].replace(",", ""))
+                total_stars = int(all_stars[-2].replace(",", ""))
+            elif len(all_stars) == 1:
+                # Only one match — could be either. Check if "today" nearby
+                if "today" in block:
+                    stars_today = int(all_stars[0].replace(",", ""))
+                else:
+                    total_stars = int(all_stars[0].replace(",", ""))
 
             repos.append({
                 "repo": full_name,
