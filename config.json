@@ -1,0 +1,82 @@
+{
+  "meta": {
+    "name": "PriceWatch",
+    "version": "1.0.0",
+    "description": "Automated e-commerce price monitoring API — free JSON + premium alerts",
+    "update_interval": "6 hours",
+    "base_url": "https://lena2099.github.io/pricewatch",
+    "monetization": "Free public data + $5/mo custom monitoring via Buy Me a Coffee"
+  },
+  "products": [
+    {
+      "id": "amazon-airpods-pro-2",
+      "name": "Apple AirPods Pro 2",
+      "asin": "B0BDHWDR12",
+      "category": "audio",
+      "url": "https://www.amazon.com/dp/B0BDHWDR12",
+      "competitors": [
+        {"name": "Samsung Galaxy Buds 3 Pro", "asin": "B0DG9FFBG4"},
+        {"name": "Sony WF-1000XM5", "asin": "B0C33XXSZ2"}
+      ]
+    },
+    {
+      "id": "amazon-kindle-scribe",
+      "name": "Kindle Scribe",
+      "asin": "B09BS5T8XN",
+      "category": "electronics",
+      "url": "https://www.amazon.com/dp/B09BS5T8XN",
+      "competitors": [
+        {"name": "reMarkable 2", "asin": "B08HDL3XJR"},
+        {"name": "BOOX Note Air4 C", "asin": "B0DLT97H5B"}
+      ]
+    },
+    {
+      "id": "amazon-echo-show-8",
+      "name": "Echo Show 8 (3rd Gen)",
+      "asin": "B0BLN2W9G8",
+      "category": "smart-home",
+      "url": "https://www.amazon.com/dp/B0BLN2W9G8",
+      "competitors": [
+        {"name": "Google Nest Hub Max", "asin": "B07X5X4LH6"},
+        {"name": "Meta Portal Go", "asin": "B09B8H7NFB"}
+      ]
+    },
+    {
+      "id": "amazon-roborock-qrevo",
+      "name": "Roborock Qrevo Master",
+      "asin": "B0D7MMY9YL",
+      "category": "smart-home",
+      "url": "https://www.amazon.com/dp/B0D7MMY9YL",
+      "competitors": [
+        {"name": "iRobot Roomba j9+", "asin": "B0C9HSB9RB"},
+        {"name": "Dreame L20 Ultra", "asin": "B0CKFN5QDH"}
+      ]
+    },
+    {
+      "id": "amazon-macbook-air-m3",
+      "name": "MacBook Air M3 15-inch",
+      "asin": "B0CX25RF6K",
+      "category": "computers",
+      "url": "https://www.amazon.com/dp/B0CX25RF6K",
+      "competitors": [
+        {"name": "Dell XPS 16", "asin": "B0CTWK3LJL"},
+        {"name": "Lenovo Yoga Slim 7x", "asin": "B0D7SM8JDF"}
+      ]
+    }
+  ],
+  "pricing_tiers": {
+    "free": {
+      "products": 10,
+      "update_interval": "6 hours",
+      "history_days": 30,
+      "price": "$0/mo"
+    },
+    "pro": {
+      "products": "unlimited",
+      "update_interval": "1 hour",
+      "history_days": 365,
+      "alerts": ["email", "price-drop", "new-low"],
+      "price": "$5/mo via Buy Me a Coffee"
+    }
+  }
+}
