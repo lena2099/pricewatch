@@ -1,45 +1,34 @@
-# 💰 PriceWatch
+# 📊 DevPulse
 
-**Automated Amazon price monitoring — free JSON API + premium alerts.**
+**Automated tech stack trending tracker — free JSON API.**
 
-Updated every 6 hours. No API key needed to use the data.
+Updated every 6 hours. Track which tools are winning.
 
-## 📊 Products Tracked
+## 📦 Data Endpoints (free)
 
-| Product | Category | Free Data |
-|---------|----------|-----------|
-| Apple AirPods Pro 2 | Audio | [JSON](https://lena2099.github.io/pricewatch/data/amazon-airpods-pro-2.json) |
-| Kindle Scribe | Electronics | [JSON](https://lena2099.github.io/pricewatch/data/amazon-kindle-scribe.json) |
-| Echo Show 8 | Smart Home | [JSON](https://lena2099.github.io/pricewatch/data/amazon-echo-show-8.json) |
-| Roborock Qrevo Master | Smart Home | [JSON](https://lena2099.github.io/pricewatch/data/amazon-roborock-qrevo.json) |
-| MacBook Air M3 | Computers | [JSON](https://lena2099.github.io/pricewatch/data/amazon-macbook-air-m3.json) |
+| Dataset | URL |
+|---------|-----|
+| GitHub Trending (top 10) | [`/data/github_trending.json`](https://lena2099.github.io/pricewatch/data/github_trending.json) |
+| NPM Weekly Downloads | [`/data/npm_stats.json`](https://lena2099.github.io/pricewatch/data/npm_stats.json) |
+| PyPI Monthly Downloads | [`/data/pypi_stats.json`](https://lena2099.github.io/pricewatch/data/pypi_stats.json) |
+| Latest Trend Report | [`/reports/`](https://lena2099.github.io/pricewatch/reports/) |
 
-→ [Latest Report](https://lena2099.github.io/pricewatch/reports/)
+## 🧩 Individual Package Histories
 
-## 🚀 Quick Start
-
-```bash
-curl https://lena2099.github.io/pricewatch/data/amazon-airpods-pro-2.json
+```
+/data/gh_{owner}_{repo}.json   → star history
+/data/npm_{package}.json        → weekly download history
+/data/pypi_{package}.json       → monthly download history
 ```
 
-Returns:
-```json
-[
-  {"t": "2026-07-30T18:00:00", "p": 199.99},
-  {"t": "2026-07-30T12:00:00", "p": 189.99},
-  ...
-]
-```
+## 💎 Pro ($3/mo)
 
-## 💎 Premium ($5/mo)
+- Custom repos/packages to track
+- Email alerts when your stack is trending
+- Private API access
 
-- Unlimited custom product tracking
-- Hourly updates (vs 6h free)
-- Email price-drop alerts
-- 365-day history
-
-→ [Subscribe via Buy Me a Coffee](https://buymeacoffee.com/) *(Coming soon)*
+→ [Subscribe](https://buymeacoffee.com/) *(Coming soon)*
 
 ## 🤖 Fully Automated
 
-Built with Python + GitHub Actions. Zero maintenance.
+Python + GitHub Actions. Zero maintenance. Runs every 6 hours.

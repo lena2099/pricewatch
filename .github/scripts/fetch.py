@@ -1,198 +1,250 @@
 #!/usr/bin/env python3
 """
-PriceWatch — Automated Amazon price tracker.
+DevPulse — Tech Stack Trending Tracker.
 Runs every 6 hours via GitHub Actions.
-Grabs prices for configured ASINs, stores history, generates reports.
+Fetches GitHub trending repos, NPM/PyPI download stats → free JSON API.
 """
-import json, os, re, sys, time
+import json, os, re, sys
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.request import Request, urlopen
 
 DATA_DIR = Path("data")
 REPORTS_DIR = Path("reports")
-CONFIG_FILE = Path("config.json")
 
-
-def load_config():
-    with open(CONFIG_FILE) as f:
-        return json.load(f)
-
-
-# ── PRICE FETCHING ───────────────────────────────────────
-def fetch_amazon_price(asin: str) -> dict:
-    """Fetch price from Amazon product page. No API key needed."""
-    url = f"https://www.amazon.com/dp/{asin}"
+# ── GITHUB TRENDING ──────────────────────────────────────
+def fetch_github_trending() -> list[dict]:
+    """Fetch trending repos from GitHub trending page (HTML parse)."""
+    url = "https://github.com/trending?since=daily"
     headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-        "Accept-Language": "en-US,en;q=0.9",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
         "Accept": "text/html,application/xhtml+xml",
-        "Cache-Control": "no-cache",
     }
     try:
         req = Request(url, headers=headers)
         html = urlopen(req, timeout=15).read().decode("utf-8", errors="replace")
 
-        # Try multiple price extraction patterns
-        # Pattern 1: whole price in span
-        price_match = re.search(r'<span[^>]*class="a-price[^"]*"[^>]*>.*?<span[^>]*class="a-offscreen"[^>]*>\$([\d,.]+)</span>', html, re.DOTALL)
-        if not price_match:
-            # Pattern 2: price in script data
-            price_match = re.search(r'"price"\s*:\s*"?\$?([\d,.]+)"?', html)
-        if not price_match:
-            # Pattern 3: any $XX.XX pattern near the buy box
-            price_match = re.search(r'data-asin-price="([\d,.]+)"', html)
+        repos = []
+        # Parse trending repo blocks
+        blocks = re.findall(r'<article[^>]*class="Box-row"[^>]*>(.*?)</article>', html, re.DOTALL)
+        for block in blocks[:10]:
+            # Repo name: owner / name
+            name_match = re.search(r'/([^/"]+)/([^/"]+)"', block)
+            if not name_match:
+                continue
+            owner, repo_name = name_match.group(1), name_match.group(2)
+            full_name = f"{owner}/{repo_name}"
 
-        price = float(price_match.group(1).replace(",", "")) if price_match else None
+            # Description
+            desc_match = re.search(r'<p[^>]*class="[^"]*col-9[^"]*[^>]*>(.*?)</p>', block, re.DOTALL)
+            desc = desc_match.group(1).strip() if desc_match else ""
+            desc = re.sub(r'<[^>]+>', '', desc).strip()
 
-        # Product title
-        title_match = re.search(r'<span[^>]*id="productTitle"[^>]*>(.*?)</span>', html, re.DOTALL)
-        title = title_match.group(1).strip() if title_match else None
+            # Language
+            lang_match = re.search(r'itemprop="programmingLanguage"[^>]*>([^<]+)<', block)
+            language = lang_match.group(1).strip() if lang_match else "Unknown"
 
+            # Stars today
+            stars_match = re.search(r'(\d[\d,]*)\s+stars\s+today', block)
+            stars_today = int(stars_match.group(1).replace(",", "")) if stars_match else 0
+
+            # Total stars
+            total_match = re.search(r'(\d[\d,]*)\s+stars', block)
+            total_stars = int(total_match.group(1).replace(",", "")) if total_match else 0
+
+            repos.append({
+                "repo": full_name,
+                "description": desc,
+                "language": language,
+                "stars_total": total_stars,
+                "stars_today": stars_today,
+                "url": f"https://github.com/{full_name}",
+            })
+        return repos
+    except Exception as e:
+        print(f"   ⚠️ GitHub trending failed: {e}")
+        return []
+
+
+# ── NPM DOWNLOADS ────────────────────────────────────────
+TOP_NPM_PACKAGES = [
+    "react", "next", "vue", "tailwindcss", "typescript",
+    "vite", "esbuild", "astro", "svelte", "zod",
+]
+
+def fetch_npm_downloads(pkg: str) -> dict:
+    """Fetch weekly downloads for an NPM package."""
+    url = f"https://api.npmjs.org/downloads/point/last-week/{pkg}"
+    try:
+        req = Request(url, headers={"User-Agent": "DevPulse/1.0"})
+        data = json.loads(urlopen(req, timeout=10).read())
         return {
-            "asin": asin,
-            "price": price,
-            "currency": "USD",
-            "title": title,
-            "url": url,
+            "package": pkg,
+            "downloads_week": data.get("downloads", 0),
             "fetched_at": datetime.now(timezone.utc).isoformat(),
         }
     except Exception as e:
+        return {"package": pkg, "downloads_week": None, "error": str(e)[:100]}
+
+
+# ── PYPI DOWNLOADS ───────────────────────────────────────
+TOP_PYPI_PACKAGES = [
+    "numpy", "pandas", "fastapi", "pydantic", "langchain",
+    "torch", "polars", "ruff", "uv", "httpx",
+]
+
+def fetch_pypi_downloads(pkg: str) -> dict:
+    """Fetch monthly downloads for a PyPI package."""
+    url = f"https://pypistats.org/api/packages/{pkg}/recent"
+    try:
+        req = Request(url, headers={"User-Agent": "DevPulse/1.0"})
+        data = json.loads(urlopen(req, timeout=10).read())
         return {
-            "asin": asin,
-            "price": None,
-            "currency": "USD",
-            "error": str(e)[:200],
-            "url": url,
+            "package": pkg,
+            "downloads_month": data.get("data", {}).get("last_month", 0) if "data" in data else 0,
             "fetched_at": datetime.now(timezone.utc).isoformat(),
         }
+    except Exception as e:
+        return {"package": pkg, "downloads_month": None, "error": str(e)[:100]}
 
 
-# ── HISTORY STORAGE ──────────────────────────────────────
-def save_price_history(product_id: str, entry: dict):
-    """Append a price data point to the product's JSON history file."""
+# ── STORAGE ──────────────────────────────────────────────
+def save_json(filename: str, data):
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    history_file = DATA_DIR / f"{product_id}.json"
+    path = DATA_DIR / filename
+    with open(path, "w") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+    print(f"   💾 {filename}")
 
+
+def append_history(filename: str, entry: dict):
+    """Append a data point to a time-series JSON file."""
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    path = DATA_DIR / filename
     history = []
-    if history_file.exists():
-        with open(history_file) as f:
+    if path.exists():
+        with open(path) as f:
             history = json.load(f)
 
-    # Keep only timestamp + price to save space
-    history.append({
-        "t": entry["fetched_at"][:19],
-        "p": entry["price"],
-    })
+    # Strip to essentials
+    history.append({k: v for k, v in entry.items() if k != "error"})
 
-    # Keep last 90 days (~360 data points for 6-hour interval)
-    history = history[-360:]
+    # Keep 90 days
+    max_entries = 360
+    if len(history) > max_entries:
+        history = history[-max_entries:]
 
-    with open(history_file, "w") as f:
+    with open(path, "w") as f:
         json.dump(history, f, indent=2)
 
-    print(f"   📦 {product_id}: ${entry['price']} ({len(history)} data points)")
 
-
-# ── COMPETITIVE REPORT ────────────────────────────────────
-def generate_report(config: dict, all_prices: list[dict]):
-    """Generate a competitive price report markdown file."""
+# ── REPORT ──────────────────────────────────────────────
+def generate_report(trending: list, npm: list, pypi: list):
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    report_file = REPORTS_DIR / f"report-{today}.md"
+    path = REPORTS_DIR / f"trends-{today}.md"
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
     lines = [
-        f"# 📊 PriceWatch Report — {today}",
+        f"# 📊 DevPulse Tech Trends — {today}",
         f"*Auto-generated at {datetime.now(timezone.utc).strftime('%H:%M UTC')}*",
         "",
-        "## Summary",
-        f"| Product | Price | Competitor Low | vs Competitor |",
-        f"|---------|-------|---------------|---------------|",
+        "## 🔥 GitHub Trending",
+        "| # | Repo | Language | ⭐ Today | ⭐ Total |",
+        "|---|------|----------|----------|----------|",
+    ]
+    for i, r in enumerate(trending[:10], 1):
+        lines.append(f"| {i} | [{r['repo']}]({r['url']}) | {r['language']} | +{r['stars_today']} | {r['stars_total']} |")
+
+    lines += [
+        "",
+        "## 📦 NPM Weekly Downloads",
+        "| Package | Downloads |",
+        "|---------|-----------|",
+    ]
+    for p in sorted(npm, key=lambda x: x.get("downloads_week", 0) or 0, reverse=True):
+        dl = f"{p.get('downloads_week', 'N/A'):,}" if p.get("downloads_week") else "N/A"
+        lines.append(f"| {p['package']} | {dl} |")
+
+    lines += [
+        "",
+        "## 🐍 PyPI Monthly Downloads",
+        "| Package | Downloads |",
+        "|---------|-----------|",
+    ]
+    for p in sorted(pypi, key=lambda x: x.get("downloads_month", 0) or 0, reverse=True):
+        dl = f"{p.get('downloads_month', 'N/A'):,}" if p.get("downloads_month") else "N/A"
+        lines.append(f"| {p['package']} | {dl} |")
+
+    lines += [
+        "",
+        "---",
+        "## 💎 Pro: Custom tech stack alerts",
+        "Track any repo/package you care about. Get email alerts when trends shift.",
+        "[→ Subscribe $3/mo](https://buymeacoffee.com/) *(Coming soon)*",
     ]
 
-    for prod in config["products"]:
-        prod_entry = next((e for e in all_prices if e["asin"] == prod["asin"]), {})
-        prod_price = prod_entry.get("price")
-
-        # Find competitor prices
-        competitor_low = None
-        competitor_details = []
-        for comp in prod.get("competitors", []):
-            comp_entry = next((e for e in all_prices if e["asin"] == comp["asin"]), {})
-            comp_price = comp_entry.get("price")
-            if comp_price:
-                competitor_details.append(f"{comp['name']}: ${comp_price}")
-                if competitor_low is None or comp_price < competitor_low:
-                    competitor_low = comp_price
-
-        prod_price_str = f"${prod_price}" if prod_price else "N/A"
-        comp_low_str = f"${competitor_low}" if competitor_low else "N/A"
-
-        if prod_price and competitor_low:
-            diff_pct = round((prod_price - competitor_low) / competitor_low * 100, 1)
-            diff_str = f"{'+' if diff_pct > 0 else ''}{diff_pct}%"
-        else:
-            diff_str = "N/A"
-
-        lines.append(f"| {prod['name']} | {prod_price_str} | {comp_low_str} | {diff_str} |")
-
-    lines.append("")
-    lines.append("## Detail")
-    lines.append("")
-    for prod in config["products"]:
-        lines.append(f"### {prod['name']}")
-        lines.append(f"[Amazon]({prod['url']})")
-        prod_entry = next((e for e in all_prices if e["asin"] == prod["asin"]), {})
-        lines.append(f"- Target: ${prod_entry.get('price', 'N/A')}")
-        lines.append("- Competitors:")
-        for comp in prod.get("competitors", []):
-            comp_entry = next((e for e in all_prices if e["asin"] == comp["asin"]), {})
-            lines.append(f"  - {comp['name']}: ${comp_entry.get('price', 'N/A')}")
-        lines.append("")
-
-    lines.append("---")
-    lines.append("[Get custom price alerts →](https://buymeacoffee.com/) *(Coming soon)*")
-
-    with open(report_file, "w") as f:
+    with open(path, "w") as f:
         f.write("\n".join(lines))
-
-    print(f"\n📄 Report: {report_file}")
+    print(f"📄 Report: {path}")
 
 
 # ── MAIN ─────────────────────────────────────────────────
 def main():
     print("=" * 60)
-    print("  💰 PriceWatch — Amazon Price Tracker")
+    print("  📊 DevPulse — Tech Stack Trends")
     print(f"  {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}")
     print("=" * 60)
 
-    config = load_config()
-    all_prices = []
+    # 1. GitHub Trending
+    print("\n🔍 Fetching GitHub trending...")
+    trending = fetch_github_trending()
+    save_json("github_trending.json", {
+        "updated": datetime.now(timezone.utc).isoformat(),
+        "repos": trending,
+    })
+    for r in trending:
+        append_history(f"gh_{r['repo'].replace('/', '_')}.json", {
+            "t": datetime.now(timezone.utc).isoformat()[:19],
+            "stars": r["stars_total"],
+            "stars_today": r["stars_today"],
+        })
+    print(f"   Found {len(trending)} trending repos")
 
-    for prod in config["products"]:
-        print(f"\n🔍 Fetching: {prod['name']} ({prod['asin']})...")
-        entry = fetch_amazon_price(prod["asin"])
-        if entry["price"]:
-            save_price_history(prod["id"], entry)
-        else:
-            print(f"   ⚠️  Failed: {entry.get('error', 'unknown error')}")
-        all_prices.append(entry)
+    # 2. NPM Stats
+    print("\n📦 Fetching NPM download stats...")
+    npm_stats = []
+    for pkg in TOP_NPM_PACKAGES:
+        data = fetch_npm_downloads(pkg)
+        npm_stats.append(data)
+        if data.get("downloads_week"):
+            append_history(f"npm_{pkg}.json", {
+                "t": datetime.now(timezone.utc).isoformat()[:19],
+                "dl": data["downloads_week"],
+            })
+    save_json("npm_stats.json", {
+        "updated": datetime.now(timezone.utc).isoformat(),
+        "packages": npm_stats,
+    })
 
-        # Fetch competitors
-        for comp in prod.get("competitors", []):
-            print(f"   ↳ Competitor: {comp['name']} ({comp['asin']})...")
-            comp_entry = fetch_amazon_price(comp["asin"])
-            if comp_entry["price"]:
-                save_price_history(comp["asin"], comp_entry)
-            else:
-                print(f"      ⚠️  Failed: {comp_entry.get('error', 'unknown error')}")
-            all_prices.append(comp_entry)
+    # 3. PyPI Stats
+    print("\n🐍 Fetching PyPI download stats...")
+    pypi_stats = []
+    for pkg in TOP_PYPI_PACKAGES:
+        data = fetch_pypi_downloads(pkg)
+        pypi_stats.append(data)
+        if data.get("downloads_month"):
+            append_history(f"pypi_{pkg}.json", {
+                "t": datetime.now(timezone.utc).isoformat()[:19],
+                "dl": data["downloads_month"],
+            })
+    save_json("pypi_stats.json", {
+        "updated": datetime.now(timezone.utc).isoformat(),
+        "packages": pypi_stats,
+    })
 
-        # Be nice to Amazon
-        time.sleep(2)
-
-    generate_report(config, all_prices)
-    print(f"\n✨ Done. {len(all_prices)} price points fetched.")
+    # 4. Report
+    generate_report(trending, npm_stats, pypi_stats)
+    print(f"\n✨ Done. {len(trending)} trending + {len(npm_stats)} NPM + {len(pypi_stats)} PyPI")
 
 
 if __name__ == "__main__":
