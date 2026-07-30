@@ -28,28 +28,31 @@ def fetch_github_trending() -> list[dict]:
         # Parse trending repo blocks
         blocks = re.findall(r'<article[^>]*class="Box-row"[^>]*>(.*?)</article>', html, re.DOTALL)
         for block in blocks[:10]:
-            # Repo name: owner / name
-            name_match = re.search(r'/([^/"]+)/([^/"]+)"', block)
+            # Repo name: in h2 tag → /owner/repo
+            name_match = re.search(r'<h2[^>]*>.*?<a[^>]*href="/([^/"]+)/([^/"]+)"', block, re.DOTALL)
             if not name_match:
                 continue
             owner, repo_name = name_match.group(1), name_match.group(2)
+            # Skip login links
+            if owner == "login":
+                continue
             full_name = f"{owner}/{repo_name}"
 
             # Description
-            desc_match = re.search(r'<p[^>]*class="[^"]*col-9[^"]*[^>]*>(.*?)</p>', block, re.DOTALL)
+            desc_match = re.search(r'<p[^>]*class="[^"]*color-fg-muted[^"]*[^>]*>(.*?)</p>', block, re.DOTALL)
             desc = desc_match.group(1).strip() if desc_match else ""
             desc = re.sub(r'<[^>]+>', '', desc).strip()
 
             # Language
-            lang_match = re.search(r'itemprop="programmingLanguage"[^>]*>([^<]+)<', block)
+            lang_match = re.search(r'itemprop="programmingLanguage"[^>]*>\s*([^<\s]+)', block)
             language = lang_match.group(1).strip() if lang_match else "Unknown"
 
-            # Stars today
-            stars_match = re.search(r'(\d[\d,]*)\s+stars\s+today', block)
+            # Stars today — match "X stars today" or "X stars today"
+            stars_match = re.search(r'(\d[\d,]*)\s+stars?\s+today', block)
             stars_today = int(stars_match.group(1).replace(",", "")) if stars_match else 0
 
-            # Total stars
-            total_match = re.search(r'(\d[\d,]*)\s+stars', block)
+            # Total stars — match "X stars"
+            total_match = re.search(r'(\d[\d,]*)\s+stars?', block)
             total_stars = int(total_match.group(1).replace(",", "")) if total_match else 0
 
             repos.append({
