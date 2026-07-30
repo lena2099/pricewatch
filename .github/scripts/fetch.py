@@ -47,21 +47,11 @@ def fetch_github_trending() -> list[dict]:
             lang_match = re.search(r'itemprop="programmingLanguage"[^>]*>\s*([^<\s]+)', block)
             language = lang_match.group(1).strip() if lang_match else "Unknown"
 
-            # Stars — separate "stars today" from total
-            stars_today = 0
-            total_stars = 0
-            # Find all "N stars" patterns
-            all_stars = re.findall(r'(\d[\d,]*)\s+stars?\b', block)
-            if len(all_stars) >= 2:
-                # Last one is "stars today", second-to-last is total
-                stars_today = int(all_stars[-1].replace(",", ""))
-                total_stars = int(all_stars[-2].replace(",", ""))
-            elif len(all_stars) == 1:
-                # Only one match — could be either. Check if "today" nearby
-                if "today" in block:
-                    stars_today = int(all_stars[0].replace(",", ""))
-                else:
-                    total_stars = int(all_stars[0].replace(",", ""))
+            # Stars — GitHub trending page only has "stars today" number.
+            # Total stars needs to come from GitHub API.
+            stars_match = re.search(r'(\d[\d,]*)\s+stars?\s+today', block)
+            stars_today = int(stars_match.group(1).replace(",", "")) if stars_match else 0
+            total_stars = 0  # Will be filled by GitHub API later
 
             repos.append({
                 "repo": full_name,
@@ -76,6 +66,21 @@ def fetch_github_trending() -> list[dict]:
     except Exception as e:
         print(f"   ⚠️ GitHub trending failed: {e}")
         return []
+
+
+def enrich_github_stats(repos: list[dict]) -> list[dict]:
+    """Call GitHub API to get total stars & forks for each repo."""
+    for r in repos:
+        try:
+            req = Request(f"https://api.github.com/repos/{r['repo']}",
+                         headers={"User-Agent": "DevPulse/1.0", "Accept": "application/vnd.github+json"})
+            data = json.loads(urlopen(req, timeout=10).read())
+            r["stars_total"] = data.get("stargazers_count", 0)
+            r["forks"] = data.get("forks_count", 0)
+            print(f"   📊 {r['repo']}: ⭐{r['stars_total']:,} (+{r['stars_today']})")
+        except Exception as e:
+            print(f"   ⚠️  GitHub API failed for {r['repo']}: {e}")
+    return repos
 
 
 # ── NPM DOWNLOADS ────────────────────────────────────────
@@ -216,6 +221,7 @@ def main():
     # 1. GitHub Trending
     print("\n🔍 Fetching GitHub trending...")
     trending = fetch_github_trending()
+    trending = enrich_github_stats(trending)
     save_json("github_trending.json", {
         "updated": datetime.now(timezone.utc).isoformat(),
         "repos": trending,
