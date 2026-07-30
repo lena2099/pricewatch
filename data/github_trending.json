@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-30T23:40:56.845551+00:00",
+  "updated": "2026-07-30T23:42:55.247676+00:00",
   "repos": [
     {
       "repo": "huggingface/speech-to-speech",
@@ -78,7 +78,7 @@
       "description": "Microsoft PowerToys is a collection of utilities that supercharge productivity and customization on Windows",
       "language": "C",
       "stars_total": 0,
-      "stars_today": 68,
+      "stars_today": 224,
       "url": "https://github.com/microsoft/PowerToys",
       "history_url": "https://raw.githubusercontent.com/lena2099/pricewatch/main/data/gh_microsoft_PowerToys.json"
     },
