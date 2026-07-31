@@ -1,275 +1,133 @@
 #!/usr/bin/env python3
 """
-DevPulse — Tech Stack Trending Tracker.
-Runs every 6 hours via GitHub Actions.
-Fetches GitHub trending repos, NPM/PyPI download stats → free JSON API.
+DevPulse — Trend Radar for Content Farm.
+Every 6 hours: finds trending repos, writes concise briefs.
+The content farm (tech-tools-hub) reads these to enrich its articles.
 """
-import json, os, re, sys
+import json, os, re, time
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-DATA_DIR = Path("data")
-REPORTS_DIR = Path("reports")
+API_KEY = os.environ["DEEPSEEK_API_KEY"]
+RADAR_FILE = Path("trends.json")
 
-# ── GITHUB TRENDING ──────────────────────────────────────
-def fetch_github_trending() -> list[dict]:
-    """Fetch trending repos from GitHub trending page (HTML parse)."""
-    url = "https://github.com/trending?since=daily"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-        "Accept": "text/html,application/xhtml+xml",
-    }
+# ══════════════════════════════════════════════════════════
+# STEP 1: Find trending repos
+# ══════════════════════════════════════════════════════════
+def fetch_trending():
+    print("🔍 Finding trending repos via GitHub Search API...")
+    repos = []
+    queries = [
+        "stars:>50 created:>=2026-06-01",
+        "stars:>100 pushed:>=2026-07-15",
+    ]
+    for q in queries:
+        try:
+            url = f"https://api.github.com/search/repositories?q={q}&sort=stars&order=desc&per_page=5"
+            req = Request(url, headers={"User-Agent": "DevPulse/2.0", "Accept": "application/vnd.github+json"})
+            data = json.loads(urlopen(req, timeout=15).read())
+            for item in data.get("items", []):
+                repos.append({
+                    "name": item["full_name"],
+                    "desc": (item.get("description") or "")[:200],
+                    "stars": item["stargazers_count"],
+                    "lang": item.get("language", ""),
+                    "url": item["html_url"],
+                    "topics": item.get("topics", [])[:5],
+                })
+            time.sleep(1)
+        except Exception as e:
+            print(f"  ⚠️ {e}")
+
+    seen = set(); unique = []
+    for r in repos:
+        if r["name"] not in seen:
+            seen.add(r["name"]); unique.append(r)
+    unique.sort(key=lambda x: x["stars"], reverse=True)
+    print(f"  Found {len(unique)} repos")
+    return unique[:8]
+
+# ══════════════════════════════════════════════════════════
+# STEP 2: DeepSeek → 1-sentence trend briefs
+# ══════════════════════════════════════════════════════════
+def summarize(repos):
+    if not repos: return []
+    names = "\n".join([f"{i+1}. {r['name']} ({r['stars']}⭐) — {r['desc'][:100]}" for i,r in enumerate(repos)])
+    prompt = f"""Below are today's trending open-source repos. For each, write:
+
+1. A 1-sentence summary of what it does (plain English)
+2. A 1-sentence "why it's trending" insight
+3. Which Amazon product category naturally fits this topic (e.g. "programming books", "mechanical keyboards", "noise-cancelling headphones", "external monitors", "webcams", "standing desks", "AI/ML books")
+
+Repos:
+{names}
+
+Return valid JSON array:
+[{{"repo":"owner/name","what":"…","why":"…","affinity":"product category"}}]"""
+
     try:
-        req = Request(url, headers=headers)
-        html = urlopen(req, timeout=15).read().decode("utf-8", errors="replace")
-
-        repos = []
-        # Parse trending repo blocks
-        blocks = re.findall(r'<article[^>]*class="Box-row"[^>]*>(.*?)</article>', html, re.DOTALL)
-        for block in blocks[:10]:
-            # Repo name: in h2 tag → /owner/repo
-            name_match = re.search(r'<h2[^>]*>.*?<a[^>]*href="/([^/"]+)/([^/"]+)"', block, re.DOTALL)
-            if not name_match:
-                continue
-            owner, repo_name = name_match.group(1), name_match.group(2)
-            # Skip login links
-            if owner == "login":
-                continue
-            full_name = f"{owner}/{repo_name}"
-
-            # Description
-            desc_match = re.search(r'<p[^>]*class="[^"]*color-fg-muted[^"]*[^>]*>(.*?)</p>', block, re.DOTALL)
-            desc = desc_match.group(1).strip() if desc_match else ""
-            desc = re.sub(r'<[^>]+>', '', desc).strip()
-
-            # Language
-            lang_match = re.search(r'itemprop="programmingLanguage"[^>]*>\s*([^<\s]+)', block)
-            language = lang_match.group(1).strip() if lang_match else "Unknown"
-
-            # Stars — GitHub trending page only has "stars today" number.
-            # Total stars needs to come from GitHub API.
-            stars_match = re.search(r'(\d[\d,]*)\s+stars?\s+today', block)
-            stars_today = int(stars_match.group(1).replace(",", "")) if stars_match else 0
-            total_stars = 0  # Will be filled by GitHub API later
-
-            repos.append({
-                "repo": full_name,
-                "description": desc,
-                "language": language,
-                "stars_total": total_stars,
-                "stars_today": stars_today,
-                "url": f"https://github.com/{full_name}",
-                "history_url": f"https://raw.githubusercontent.com/lena2099/pricewatch/main/data/gh_{owner}_{repo_name}.json",
-            })
-        return repos
+        body = json.dumps({
+            "model":"deepseek-chat","messages":[{"role":"user","content":prompt}],
+            "max_tokens":1500,"temperature":0.4
+        }).encode()
+        req = Request("https://api.deepseek.com/chat/completions", data=body,
+                      headers={"Authorization":f"Bearer {API_KEY}","Content-Type":"application/json"})
+        resp = json.loads(urlopen(req, timeout=60).read())
+        raw = resp["choices"][0]["message"]["content"].strip()
+        raw = raw.replace("```json","").replace("```","").strip()
+        return json.loads(raw)
     except Exception as e:
-        print(f"   ⚠️ GitHub trending failed: {e}")
+        print(f"  ⚠️ Summarize failed: {e}")
         return []
 
-
-def enrich_github_stats(repos: list[dict]) -> list[dict]:
-    """Call GitHub API to get total stars & forks for each repo."""
-    for r in repos:
-        try:
-            req = Request(f"https://api.github.com/repos/{r['repo']}",
-                         headers={"User-Agent": "DevPulse/1.0", "Accept": "application/vnd.github+json"})
-            data = json.loads(urlopen(req, timeout=10).read())
-            r["stars_total"] = data.get("stargazers_count", 0)
-            r["forks"] = data.get("forks_count", 0)
-            print(f"   📊 {r['repo']}: ⭐{r['stars_total']:,} (+{r['stars_today']})")
-        except Exception as e:
-            print(f"   ⚠️  GitHub API failed for {r['repo']}: {e}")
-    return repos
-
-
-# ── NPM DOWNLOADS ────────────────────────────────────────
-TOP_NPM_PACKAGES = [
-    "react", "next", "vue", "tailwindcss", "typescript",
-    "vite", "esbuild", "astro", "svelte", "zod",
-]
-
-def fetch_npm_downloads(pkg: str) -> dict:
-    """Fetch weekly downloads for an NPM package."""
-    url = f"https://api.npmjs.org/downloads/point/last-week/{pkg}"
-    try:
-        req = Request(url, headers={"User-Agent": "DevPulse/1.0"})
-        data = json.loads(urlopen(req, timeout=10).read())
-        return {
-            "package": pkg,
-            "downloads_week": data.get("downloads", 0),
-            "fetched_at": datetime.now(timezone.utc).isoformat(),
-        }
-    except Exception as e:
-        return {"package": pkg, "downloads_week": None, "error": str(e)[:100]}
-
-
-# ── PYPI DOWNLOADS ───────────────────────────────────────
-TOP_PYPI_PACKAGES = [
-    "numpy", "pandas", "fastapi", "pydantic", "langchain",
-    "torch", "polars", "ruff", "uv", "httpx",
-]
-
-def fetch_pypi_downloads(pkg: str) -> dict:
-    """Fetch monthly downloads for a PyPI package."""
-    url = f"https://pypistats.org/api/packages/{pkg}/recent"
-    try:
-        req = Request(url, headers={"User-Agent": "DevPulse/1.0"})
-        data = json.loads(urlopen(req, timeout=10).read())
-        downloads = 0
-        if "data" in data and "last_month" in data["data"]:
-            downloads = data["data"]["last_month"]
-        elif "data" in data:
-            # Some versions return the data directly
-            downloads = data["data"] if isinstance(data["data"], int) else 0
-        return {
-            "package": pkg,
-            "downloads_month": downloads,
-            "fetched_at": datetime.now(timezone.utc).isoformat(),
-        }
-    except Exception as e:
-        return {"package": pkg, "downloads_month": None, "error": str(e)[:100]}
-
-
-# ── STORAGE ──────────────────────────────────────────────
-def save_json(filename: str, data):
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    path = DATA_DIR / filename
-    with open(path, "w") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-    print(f"   💾 {filename}")
-
-
-def append_history(filename: str, entry: dict):
-    """Append a data point to a time-series JSON file."""
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    path = DATA_DIR / filename
-    history = []
-    if path.exists():
-        with open(path) as f:
-            history = json.load(f)
-
-    # Strip to essentials
-    history.append({k: v for k, v in entry.items() if k != "error"})
-
-    # Keep 90 days
-    max_entries = 360
-    if len(history) > max_entries:
-        history = history[-max_entries:]
-
-    with open(path, "w") as f:
-        json.dump(history, f, indent=2)
-
-
-# ── REPORT ──────────────────────────────────────────────
-def generate_report(trending: list, npm: list, pypi: list):
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    path = REPORTS_DIR / f"trends-{today}.md"
-    REPORTS_DIR.mkdir(parents=True, exist_ok=True)
-
-    lines = [
-        f"# 📊 DevPulse Tech Trends — {today}",
-        f"*Auto-generated at {datetime.now(timezone.utc).strftime('%H:%M UTC')}*",
-        "",
-        "## 🔥 GitHub Trending",
-        "| # | Repo | Language | ⭐ Today | ⭐ Total |",
-        "|---|------|----------|----------|----------|",
-    ]
-    for i, r in enumerate(trending[:10], 1):
-        lines.append(f"| {i} | [{r['repo']}]({r['url']}) | {r['language']} | +{r['stars_today']} | {r['stars_total']} |")
-
-    lines += [
-        "",
-        "## 📦 NPM Weekly Downloads",
-        "| Package | Downloads |",
-        "|---------|-----------|",
-    ]
-    for p in sorted(npm, key=lambda x: x.get("downloads_week", 0) or 0, reverse=True):
-        dl = f"{p.get('downloads_week', 'N/A'):,}" if p.get("downloads_week") else "N/A"
-        lines.append(f"| {p['package']} | {dl} |")
-
-    lines += [
-        "",
-        "## 🐍 PyPI Monthly Downloads",
-        "| Package | Downloads |",
-        "|---------|-----------|",
-    ]
-    for p in sorted(pypi, key=lambda x: x.get("downloads_month", 0) or 0, reverse=True):
-        dl = f"{p.get('downloads_month', 'N/A'):,}" if p.get("downloads_month") else "N/A"
-        lines.append(f"| {p['package']} | {dl} |")
-
-    lines += [
-        "",
-        "---",
-        "## 💎 Pro: Custom tech stack alerts",
-        "Track any repo/package you care about. Get email alerts when trends shift.",
-        "[→ Subscribe $3/mo](https://buymeacoffee.com/) *(Coming soon)*",
-    ]
-
-    with open(path, "w") as f:
-        f.write("\n".join(lines))
-    print(f"📄 Report: {path}")
-
-
-# ── MAIN ─────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════
+# MAIN
+# ══════════════════════════════════════════════════════════
 def main():
-    print("=" * 60)
-    print("  📊 DevPulse — Tech Stack Trends")
+    print("=" * 50)
+    print("  📡 DevPulse Trend Radar")
     print(f"  {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}")
-    print("=" * 60)
+    print("=" * 50)
 
-    # 1. GitHub Trending
-    print("\n🔍 Fetching GitHub trending...")
-    trending = fetch_github_trending()
-    trending = enrich_github_stats(trending)
-    save_json("github_trending.json", {
+    repos = fetch_trending()
+    if not repos:
+        print("No repos found. Skipping.")
+        return
+
+    briefs = summarize(repos)
+    if not briefs:
+        print("Summarization failed. Saving raw repos.")
+        briefs = [{"repo":r["name"],"what":r["desc"],"why":"Trending on GitHub","affinity":"programming books"} for r in repos]
+
+    # Merge stars back into briefs
+    for b in briefs:
+        match = next((r for r in repos if r["name"] == b.get("repo","")), None)
+        if match:
+            b["stars"] = match["stars"]
+            b["lang"] = match["lang"]
+            b["url"] = match["url"]
+
+    radar = {
         "updated": datetime.now(timezone.utc).isoformat(),
-        "repos": trending,
-    })
-    for r in trending:
-        append_history(f"gh_{r['repo'].replace('/', '_')}.json", {
-            "t": datetime.now(timezone.utc).isoformat()[:19],
-            "stars": r["stars_total"],
-            "stars_today": r["stars_today"],
-        })
-    print(f"   Found {len(trending)} trending repos")
+        "trends": briefs,
+    }
+    RADAR_FILE.write_text(json.dumps(radar, indent=2, ensure_ascii=False))
+    print(f"✅ trends.json written ({len(briefs)} trends)")
 
-    # 2. NPM Stats
-    print("\n📦 Fetching NPM download stats...")
-    npm_stats = []
-    for pkg in TOP_NPM_PACKAGES:
-        data = fetch_npm_downloads(pkg)
-        npm_stats.append(data)
-        if data.get("downloads_week"):
-            append_history(f"npm_{pkg}.json", {
-                "t": datetime.now(timezone.utc).isoformat()[:19],
-                "dl": data["downloads_week"],
-            })
-    save_json("npm_stats.json", {
-        "updated": datetime.now(timezone.utc).isoformat(),
-        "packages": npm_stats,
-    })
+    # Also generate a human-readable markdown
+    md = f"# 📡 Tech Trends — {datetime.now(timezone.utc).strftime('%Y-%m-%d')}\n\n"
+    for b in briefs:
+        md += f"### [{b.get('repo','')}]({b.get('url','')}) ⭐{b.get('stars','?')}\n"
+        md += f"- **What**: {b.get('what','')}\n"
+        md += f"- **Why trending**: {b.get('why','')}\n"
+        md += f"- **Affinity**: {b.get('affinity','')}\n\n"
+    Path("trends.md").write_text(md)
+    print("✅ trends.md written")
 
-    # 3. PyPI Stats
-    print("\n🐍 Fetching PyPI download stats...")
-    pypi_stats = []
-    for pkg in TOP_PYPI_PACKAGES:
-        data = fetch_pypi_downloads(pkg)
-        pypi_stats.append(data)
-        if data.get("downloads_month"):
-            append_history(f"pypi_{pkg}.json", {
-                "t": datetime.now(timezone.utc).isoformat()[:19],
-                "dl": data["downloads_month"],
-            })
-    save_json("pypi_stats.json", {
-        "updated": datetime.now(timezone.utc).isoformat(),
-        "packages": pypi_stats,
-    })
-
-    # 4. Report
-    generate_report(trending, npm_stats, pypi_stats)
-    print(f"\n✨ Done. {len(trending)} trending + {len(npm_stats)} NPM + {len(pypi_stats)} PyPI")
-
+    # Short status
+    print(f"\n📊 Top trend: {briefs[0]['repo']} ⭐{briefs[0].get('stars','?')}")
+    print(f"   {briefs[0].get('what','')[:100]}")
 
 if __name__ == "__main__":
     main()
