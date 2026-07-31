@@ -1,34 +1,23 @@
-# 📊 DevPulse
+# 📰 DevPulse
 
-**Automated tech stack trending tracker — free JSON API.**
+**Content idea engine — finds trending open-source tools and writes review articles.**
 
-Updated every 6 hours. Track which tools are winning.
+Output goes directly to the `_posts/` directory, ready for Jekyll/GitHub Pages publishing.
 
-## 📦 Data Endpoints (free)
-
-| Dataset | URL |
-|---------|-----|
-| GitHub Trending (top 10) | [`/data/github_trending.json`](https://lena2099.github.io/pricewatch/data/github_trending.json) |
-| NPM Weekly Downloads | [`/data/npm_stats.json`](https://lena2099.github.io/pricewatch/data/npm_stats.json) |
-| PyPI Monthly Downloads | [`/data/pypi_stats.json`](https://lena2099.github.io/pricewatch/data/pypi_stats.json) |
-| Latest Trend Report | [`/reports/`](https://lena2099.github.io/pricewatch/reports/) |
-
-## 🧩 Individual Package Histories
+## How It Works
 
 ```
-/data/gh_{owner}_{repo}.json   → star history
-/data/npm_{package}.json        → weekly download history
-/data/pypi_{package}.json       → monthly download history
+GitHub Search API → find trending repos (100+ ⭐, fresh)
+        ↓
+DeepSeek AI → write 600-900 word review article
+        ↓
+Jekyll post with Amazon affiliate links & SEO metadata
 ```
 
-## 💎 Pro ($3/mo)
+## Schedule
 
-- Custom repos/packages to track
-- Email alerts when your stack is trending
-- Private API access
+Every 6 hours. Produces 0-2 new articles per run.
 
-→ [Subscribe](https://buymeacoffee.com/) *(Coming soon)*
+## Integration
 
-## 🤖 Fully Automated
-
-Python + GitHub Actions. Zero maintenance. Runs every 6 hours.
+Articles generated here can be manually copied to the main tech-tools-hub blog, or this repo's GitHub Pages can serve as a secondary content channel.
