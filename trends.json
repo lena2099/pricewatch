@@ -1,75 +1,75 @@
 {
-  "updated": "2026-07-31T12:34:10.845927+00:00",
+  "updated": "2026-07-31T17:12:14.847524+00:00",
   "trends": [
     {
       "repo": "public-apis/public-apis",
-      "what": "A curated, community-maintained list of free public APIs for developers to use in their projects.",
-      "why": "It's the go-to reference for developers looking to quickly find and integrate third-party services, making it a perennial favorite for API discovery.",
+      "what": "A curated list of free APIs for developers to use in their projects.",
+      "why": "It's a massive, constantly updated reference that saves developers hours of searching for free data sources.",
       "affinity": "programming books",
-      "stars": 453731,
+      "stars": 453774,
       "lang": "Python",
       "url": "https://github.com/public-apis/public-apis"
     },
     {
       "repo": "freeCodeCamp/freeCodeCamp",
-      "what": "An open-source platform offering free coding lessons, projects, and certifications in web development, data science, and more.",
-      "why": "It's a massive, self-paced learning resource that keeps growing, making it a top destination for anyone from beginners to career-changers.",
-      "affinity": "AI/ML books",
-      "stars": 453277,
+      "what": "An open-source platform offering free coding lessons, projects, and certifications in math, programming, and computer science.",
+      "why": "It's the go-to free resource for self-taught developers, and its curriculum updates keep it relevant.",
+      "affinity": "programming books",
+      "stars": 453283,
       "lang": "TypeScript",
       "url": "https://github.com/freeCodeCamp/freeCodeCamp"
     },
     {
       "repo": "EbookFoundation/free-programming-books",
-      "what": "A massive collection of freely available programming books, tutorials, and learning resources in multiple languages.",
-      "why": "It democratizes access to technical knowledge, constantly updated by the community, making it a staple for self-taught developers.",
+      "what": "A massive collection of freely available programming books and learning resources in multiple languages.",
+      "why": "It democratizes access to technical knowledge, making it a staple bookmark for learners worldwide.",
       "affinity": "programming books",
-      "stars": 393411,
+      "stars": 393425,
       "lang": "Python",
       "url": "https://github.com/EbookFoundation/free-programming-books"
     },
     {
       "repo": "openclaw/openclaw",
-      "what": "A cross-platform personal AI assistant that runs locally on any OS, designed to be your own private, always-available helper.",
-      "why": "It taps into the growing demand for private, self-hosted AI that doesn't rely on cloud services, appealing to privacy-conscious users.",
+      "what": "A personal AI assistant that runs on any OS and platform, designed to be your always-available helper.",
+      "why": "The 'lobster way' branding and cross-platform promise tap into the growing demand for local, private AI assistants.",
       "affinity": "AI/ML books",
-      "stars": 384678,
+      "stars": 384706,
       "lang": "TypeScript",
       "url": "https://github.com/openclaw/openclaw"
     },
     {
       "repo": "nilbuild/developer-roadmap",
-      "what": "Interactive roadmaps and guides that outline step-by-step learning paths for various developer roles and technologies.",
-      "why": "It provides clear, visual career guidance in a field where the learning path is often overwhelming, making it a top bookmark for devs.",
+      "what": "Interactive roadmaps and guides that help developers plan their learning paths and career growth.",
+      "why": "With tech careers evolving fast, people crave structured visual guidance, and this repo delivers it beautifully.",
       "affinity": "programming books",
-      "stars": 363236,
+      "stars": 363255,
       "lang": "TypeScript",
       "url": "https://github.com/nilbuild/developer-roadmap"
     },
     {
       "repo": "DietrichGebert/ponytail",
-      "what": "A tool that makes AI agents generate minimal, lazy, and efficient code by mimicking the habits of a senior developer who avoids over-engineering.",
-      "why": "It's a humorous yet practical take on AI code generation, addressing the common problem of AI producing overly complex solutions.",
+      "what": "A tool that makes AI agents generate minimal, lazy-but-correct code, mimicking a senior dev who avoids over-engineering.",
+      "why": "It's a humorous yet practical take on AI code quality, resonating with devs tired of bloated AI-generated code.",
       "affinity": "programming books",
-      "stars": 92772,
+      "stars": 92899,
       "lang": "JavaScript",
       "url": "https://github.com/DietrichGebert/ponytail"
     },
     {
       "repo": "xai-org/grok-build",
-      "what": "A fullscreen, mouse-interactive terminal UI (TUI) and harness for running coding agents, designed for extensibility and control.",
-      "why": "It brings a modern, interactive coding experience to the terminal, appealing to developers who prefer powerful CLI tools over IDEs.",
+      "what": "A fullscreen, mouse-interactive terminal UI and harness for running coding agents, built by SpaceXAI.",
+      "why": "It brings a polished, IDE-like experience to terminal-based AI coding, which is a hot niche right now.",
       "affinity": "mechanical keyboards",
-      "stars": 23644,
+      "stars": 23676,
       "lang": "Rust",
       "url": "https://github.com/xai-org/grok-build"
     },
     {
       "repo": "JustVugg/colibri",
-      "what": "A pure C, zero-dependency runtime that runs large mixture-of-experts (MoE) AI models on consumer hardware by streaming experts from disk.",
-      "why": "It challenges the assumption that frontier AI needs expensive GPUs, making powerful models accessible on everyday machines.",
+      "what": "A pure-C, zero-dependency runtime that runs frontier mixture-of-experts AI models on consumer hardware by streaming experts from disk.",
+      "why": "It promises to run huge models locally without expensive GPUs, a breakthrough for privacy and cost-conscious users.",
       "affinity": "external monitors",
-      "stars": 21373,
+      "stars": 21434,
       "lang": "C",
       "url": "https://github.com/JustVugg/colibri"
     }
