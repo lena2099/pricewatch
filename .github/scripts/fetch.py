@@ -8,6 +8,7 @@ import json, os, re, time
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.request import Request, urlopen
+from urllib.parse import quote
 
 API_KEY = os.environ["DEEPSEEK_API_KEY"]
 RADAR_FILE = Path("trends.json")
@@ -24,7 +25,7 @@ def fetch_trending():
     ]
     for q in queries:
         try:
-            url = f"https://api.github.com/search/repositories?q={q}&sort=stars&order=desc&per_page=5"
+            url = f"https://api.github.com/search/repositories?q={quote(q)}&sort=stars&order=desc&per_page=5"
             req = Request(url, headers={"User-Agent": "DevPulse/2.0", "Accept": "application/vnd.github+json"})
             data = json.loads(urlopen(req, timeout=15).read())
             for item in data.get("items", []):
