@@ -1,42 +1,42 @@
-# 📡 Tech Trends — 2026-08-01
+# 📡 Tech Trends — 2026-08-02
 
-### [public-apis/public-apis](https://github.com/public-apis/public-apis) ⭐453976
-- **What**: A curated, community-maintained list of free public APIs for developers to use in their projects.
-- **Why trending**: It's the go-to reference for developers looking to quickly find free data sources, making it a timeless and highly-starred resource.
+### [public-apis/public-apis](https://github.com/public-apis/public-apis) ⭐454023
+- **What**: A curated list of free public APIs for developers to use in their projects.
+- **Why trending**: It's a go-to resource for developers looking to quickly find and integrate third-party services, making it a perennial favorite.
 - **Affinity**: programming books
 
-### [freeCodeCamp/freeCodeCamp](https://github.com/freeCodeCamp/freeCodeCamp) ⭐453323
-- **What**: An open-source platform offering a full curriculum and interactive coding challenges to learn programming, math, and computer science for free.
-- **Why trending**: It's a massive, self-paced learning hub that democratizes tech education, consistently attracting learners and contributors worldwide.
-- **Affinity**: educational software
+### [freeCodeCamp/freeCodeCamp](https://github.com/freeCodeCamp/freeCodeCamp) ⭐453334
+- **What**: An open-source platform offering free coding lessons, projects, and certifications in math, programming, and computer science.
+- **Why trending**: It remains a top destination for self-learners due to its comprehensive, free, and community-driven curriculum.
+- **Affinity**: programming books
 
-### [EbookFoundation/free-programming-books](https://github.com/EbookFoundation/free-programming-books) ⭐393502
-- **What**: A comprehensive repository of freely available programming books, tutorials, and learning resources in multiple languages.
-- **Why trending**: It serves as a free library for developers at all levels, making it a staple bookmark for anyone seeking cost-free technical knowledge.
-- **Affinity**: e-book readers
+### [EbookFoundation/free-programming-books](https://github.com/EbookFoundation/free-programming-books) ⭐393527
+- **What**: A massive collection of freely available programming books, tutorials, and educational resources.
+- **Why trending**: It's trending because it provides high-quality learning material at zero cost, appealing to budget-conscious developers.
+- **Affinity**: programming books
 
-### [openclaw/openclaw](https://github.com/openclaw/openclaw) ⭐384833
-- **What**: A personal AI assistant that runs on any OS and platform, designed to be your always-available digital helper.
-- **Why trending**: Its cross-platform flexibility and 'lobster way' branding make it a fun, accessible entry point for users wanting their own AI sidekick.
-- **Affinity**: smart speakers
+### [openclaw/openclaw](https://github.com/openclaw/openclaw) ⭐384871
+- **What**: A personal AI assistant that runs on any OS and platform, designed to be your always-available helper.
+- **Why trending**: Its cross-platform flexibility and 'lobster way' branding make it a quirky yet practical choice for AI enthusiasts.
+- **Affinity**: smart home devices
 
-### [nilbuild/developer-roadmap](https://github.com/nilbuild/developer-roadmap) ⭐363342
-- **What**: Interactive roadmaps, guides, and educational content that help developers plan and grow their careers step-by-step.
-- **Why trending**: It turns the chaotic path of tech learning into clear visual paths, which is essential for both beginners and career-changers.
-- **Affinity**: career development books
+### [nilbuild/developer-roadmap](https://github.com/nilbuild/developer-roadmap) ⭐363361
+- **What**: Interactive roadmaps and guides that help developers plan their learning and career growth.
+- **Why trending**: It's trending because it simplifies complex career planning into visual, step-by-step paths, especially useful for beginners.
+- **Affinity**: programming books
 
-### [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) ⭐93472
-- **What**: A tool that makes AI agents write code in the style of a lazy senior developer, prioritizing minimal and simple solutions.
-- **Why trending**: It's a humorous yet practical take on AI code generation, appealing to devs who value clean, over-engineered-free code.
-- **Affinity**: programming humor books
+### [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) ⭐93656
+- **What**: A tool that makes AI agents adopt a lazy senior developer's mindset, prioritizing minimal code and avoiding unnecessary work.
+- **Why trending**: It's trending for its humorous yet practical approach to optimizing AI-generated code, resonating with devs tired of over-engineering.
+- **Affinity**: programming books
 
-### [xai-org/grok-build](https://github.com/xai-org/grok-build) ⭐23788
-- **What**: A fullscreen, mouse-interactive coding agent harness and terminal UI (TUI) for building with AI assistance.
-- **Why trending**: It offers a novel, immersive way to interact with coding agents, pushing the boundaries of developer tooling UX.
+### [xai-org/grok-build](https://github.com/xai-org/grok-build) ⭐23821
+- **What**: A coding agent harness with a fullscreen, mouse-interactive TUI for building and running AI-assisted development workflows.
+- **Why trending**: It's trending due to its focus on a rich, interactive terminal experience, appealing to developers who prefer keyboard-driven tools.
 - **Affinity**: mechanical keyboards
 
-### [JustVugg/colibri](https://github.com/JustVugg/colibri) ⭐21860
-- **What**: A pure C, zero-dependency runtime that runs frontier mixture-of-experts (MoE) models on local hardware by streaming experts from disk.
-- **Why trending**: It makes high-end AI models accessible on everyday machines, a breakthrough for privacy and cost-conscious users.
-- **Affinity**: external SSDs
+### [JustVugg/colibri](https://github.com/JustVugg/colibri) ⭐22005
+- **What**: A pure C, zero-dependency runtime that streams expert models from disk, enabling frontier MoE models on existing hardware.
+- **Why trending**: It's trending because it democratizes access to large AI models by running them on modest hardware, a major breakthrough for local AI.
+- **Affinity**: external monitors
 
